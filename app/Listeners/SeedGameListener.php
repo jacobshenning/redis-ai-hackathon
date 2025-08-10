@@ -37,7 +37,7 @@ class SeedGameListener implements ShouldQueue
         $biome = json_decode($event->game->biomes)[array_rand(json_decode($event->game->biomes))];
         $locationType = config('services.openai.location.types')[array_rand(config('services.openai.location.types'))];
 
-        $locationSeeds = json_decode($event->openAiService->getJsonResponse(
+        $locationSeeds = json_decode($event->openAiService->getJsonResponseOld(
             config('services.openai.location.seed') . " {$event->game->land}. Make them in this biome: $biome. The location type is: $locationType",
             config('services.openai.location.text')
         )[0], true)['responses'];

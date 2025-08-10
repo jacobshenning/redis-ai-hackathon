@@ -66,7 +66,7 @@ class SeedLocationListener implements ShouldQueue
 
         $keywordString = $keywords->push(...collect(config('services.openai.quest.keywords'))->random($localQuestCount))->implode(', ');
 
-        $locationQuestSummaries = json_decode($event->openAiService->getJsonResponse(
+        $locationQuestSummaries = json_decode($event->openAiService->getJsonResponseOld(
             config('services.openai.quest.prompt') . ". The events are occurring in this location: $event->seed" . " Generate a total of " . count($locationQuests) . " responses. Each quest should be based on these keywords respectively: $keywordString",
             config('services.openai.quest.text')
         )[0], true)['responses'];

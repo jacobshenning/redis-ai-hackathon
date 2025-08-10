@@ -5,6 +5,7 @@ namespace App\Services;
 use Exception;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\Client\Pool;
+use Illuminate\Support\Facades\Log;
 
 class OpenAiService implements OpenAiServiceContract
 {
@@ -34,7 +35,7 @@ class OpenAiService implements OpenAiServiceContract
     /**
      * @throws Exception
      */
-    public function getJsonResponse(string $input, string $text)
+    public function getJsonResponseOld(string $input, string $text)
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . config('services.openai.api_key'),
@@ -52,6 +53,28 @@ class OpenAiService implements OpenAiServiceContract
             return (array) $aiResponse['output'][0]['content'][0]['text'];
         } else {
             dd($response->body());
+            throw new Exception("Invalid response from open ai");
+        }
+    }
+
+    public function getJsonResponse(string $input, string $text): array
+    {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . config('services.openai.api_key'),
+            'Content-Type' => 'application/json',
+        ])->post('https://api.openai.com/v1/responses', [
+            'model' => 'gpt-4.1',
+            'top_p' => 0.1,
+            'input' => $input,
+            'text' => json_decode($text)
+        ]);
+
+        if ($response->successful()) {
+            $aiResponse = $response->json();
+
+            return json_decode($aiResponse['output'][0]['content'][0]['text'], true);
+        } else {
+            dd($response->body(), $text);
             throw new Exception("Invalid response from open ai");
         }
     }

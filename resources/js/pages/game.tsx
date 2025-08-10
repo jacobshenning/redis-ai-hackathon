@@ -9,8 +9,8 @@ import squares from '../../assets/autumn.svg';
 interface GamePageProps extends SharedData {
     playerLocation: string,
     character?: {
-        Name: string,
-        Description: string
+        name: string,
+        description: string
     },
     equipment?: {
         name: string,
@@ -184,7 +184,7 @@ export default function Game() {
 
     const handleCharacterSelection = async (character) => {
         router.post(`/game/${gameCode}/pickCharacter`, {
-            name: character.Name
+            name: character.name
         }, {
             onSuccess: () => {
                 setMessage('');
@@ -258,8 +258,8 @@ export default function Game() {
                     <div className="w-80 bg-sky-900 p-4 text-white bg-repeat basis-1/5" style={{backgroundImage: `url(${squares})`}}>
                         <h3 className="font-black text-lg mb-4">Your Character:</h3>
                         <div className="space-y-2">
-                            <h4 className="font-semibold capitalize">{character?.Name}</h4>
-                            <p>{character?.Description}</p>
+                            <h4 className="font-semibold capitalize">{character?.name}</h4>
+                            <p>{character?.description}</p>
                         </div>
                         <h3 className="font-black text-lg mb-4 pt-8">Your Loot:</h3>
                         <div className="space-y-2">

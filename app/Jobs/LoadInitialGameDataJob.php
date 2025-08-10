@@ -8,9 +8,11 @@ use App\Events\StartingEquipmentEvent;
 use App\Game;
 use App\Services\GameServiceContract;
 use App\Services\OpenAiServiceContract;
+use App\Services\PromptServiceContract;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class LoadInitialGameDataJob implements ShouldQueue
@@ -61,9 +63,14 @@ class LoadInitialGameDataJob implements ShouldQueue
         $startingLetter = Str::random(1);
         $syllables = mt_rand(2, 5);
 
-        $prompt = config('services.openai.story.prompt') . ". The name will start with $startingLetter and be $syllables syllables long. Here are some descriptors you need to use: " . implode(', ', $descriptors);
+        /** @var PromptServiceContract $promptService */
+        $promptService = App::make(PromptServiceContract::class);
 
-        $data = json_decode($this->openAiService->getJsonResponse($prompt, config('services.openai.story.text'))[0], true);
+        $prompt = $promptService->getPrompt('story.prompt', ['story.descriptor', 'story.landforms', 'story.biomes', 'story.climate'], ['StartingLetter' => $startingLetter, 'syllables' => $syllables]);
+
+//        $prompt = config('services.openai.story.prompt') . ". Create a name that starts with $startingLetter and is $syllables syllables long. Here are some descriptors you need to use: " . implode(', ', $descriptors);
+
+        $data = json_decode($this->openAiService->getJsonResponseOld($prompt, config('services.openai.story.text'))[0], true);
 
         $this->game->region = $data;
 
@@ -78,70 +85,19 @@ class LoadInitialGameDataJob implements ShouldQueue
 
     private function loadStartingCharacters()
     {
-        $data = [
-            [
-                "Name" => "Sammy",
-                "Race" => "Shark",
-                "Description" => "Sammy is a shark who can breath on land and slither across the ground",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Luna",
-                "Race" => "Wolf",
-                "Description" => "Luna is a mystical wolf with silver fur that glows under moonlight",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Zephyr",
-                "Race" => "Phoenix",
-                "Description" => "Zephyr is a phoenix who can control wind currents and regenerate from ashes",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Coral",
-                "Race" => "Mermaid",
-                "Description" => "Coral is a mermaid who can walk on land using magical leg transformation",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Rocky",
-                "Race" => "Golem",
-                "Description" => "Rocky is a stone golem with incredible strength and earth manipulation abilities",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Whisper",
-                "Race" => "Shadow Fox",
-                "Description" => "Whisper is a shadow fox that can phase through solid objects and become invisible",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Blaze",
-                "Race" => "Dragon",
-                "Description" => "Blaze is a young dragon with the ability to breathe different colored flames",
-                "hands" => 2,
-                "level" => 1
-            ],
-            [
-                "Name" => "Echo",
-                "Race" => "Crystal Owl",
-                "Description" => "Echo is a crystal owl who can manipulate sound waves and see through illusions",
-                "hands" => 2,
-                "level" => 1
-            ]
-        ];
+        /** @var PromptServiceContract $promptService */
+        $promptService = App::make(PromptServiceContract::class);
 
-        $this->game->gameStartOptions['characters'] = $data;
+        $data = $this->openAiService->getJsonResponse(
+            $promptService->getPrompt('characters.player.prompt', ['characters.player.species', 'characters.player.class'], ['count' => 12]),
+            $promptService->getShape('characters.player.shape')
+        );
+
+        $this->game->gameStartOptions['characters'] = $data['characters'];
 
         $this->gameService->saveGame($this->game);
 
-        $broadcastEvent = new StartingCharactersEvent($this->game, $data);
+        $broadcastEvent = new StartingCharactersEvent($this->game,  $data['characters']);
 
         broadcast($broadcastEvent);
     }
@@ -223,11 +179,19 @@ class LoadInitialGameDataJob implements ShouldQueue
             ]
         ];
 
-        $this->game->gameStartOptions['equipment'] = $data;
+        /** @var PromptServiceContract $promptService */
+        $promptService = App::make(PromptServiceContract::class);
+
+        $data = $this->openAiService->getJsonResponse(
+            $promptService->getPrompt('weapons.prompt', ['weapons.type', 'weapons.power'], ['count' => 12]),
+            $promptService->getShape('weapons.shape')
+        );
+
+        $this->game->gameStartOptions['equipment'] = $data['weapons'];
 
         $this->gameService->saveGame($this->game);
 
-        $broadcastEvent = new StartingEquipmentEvent($this->game, $data);
+        $broadcastEvent = new StartingEquipmentEvent($this->game, $data['weapons']);
 
         broadcast($broadcastEvent);
     }

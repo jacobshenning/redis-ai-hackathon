@@ -22,16 +22,16 @@ export default function CharacterCards({ startingCharacters = [], onCharacterCli
             <div className="grid grid-cols-1  md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {startingCharacters.map((character) => (
                     <div
-                        key={character.Name}
+                        key={character.name}
                         onClick={() => handleCharacterClick(character)}
                         className="bg-red-900 bg-repeat bg-center border-red-600 border-2 text-white shadow-md hover:bg-red-500 transition-shadow duration-200 cursor-pointer p-4"
                         style={{ backgroundImage: `url(${background})` }}
                     >
                         <h3 className="text-lg font-semibold mb-2 capitalize">
-                            {character.Name}
+                            {character.name}
                         </h3>
                         <p className="text-sm text-white line-clamp-3">
-                            {character.Description}
+                            {character.description}
                         </p>
                     </div>
                 ))}

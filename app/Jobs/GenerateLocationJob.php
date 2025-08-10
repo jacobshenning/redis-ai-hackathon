@@ -169,7 +169,7 @@ class GenerateLocationJob implements ShouldQueue
             return [];
         }
 
-        $quests = json_decode($this->openAiService->getJsonResponse(
+        $quests = json_decode($this->openAiService->getJsonResponseOld(
             config('services.openai.quest.prompt') . ". The events are occurring in this location: $seed" . " Generate a total of $totalTravelQuests responses. Each quest should be based on these keywords respectively: (travel quest (takes player to new location)",
             config('services.openai.quest.text')
         )[0], true)['responses'];
@@ -188,7 +188,7 @@ class GenerateLocationJob implements ShouldQueue
 
         $keywordString = collect(config('services.openai.quest.keywords'))->random($totalQuests)->implode(', ');
 
-        $quests = json_decode($this->openAiService->getJsonResponse(
+        $quests = json_decode($this->openAiService->getJsonResponseOld(
             config('services.openai.quest.prompt') . ". The events are occurring in this location: $seed" . " Generate a total of $totalQuests responses. Each quest should be based on these keywords respectively: $keywordString",
             config('services.openai.quest.text')
         )[0], true)['responses'];
