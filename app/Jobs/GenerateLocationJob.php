@@ -67,7 +67,7 @@ class GenerateLocationJob implements ShouldQueue
 
         for ($i = 0; $i < count($this->game->locations); $i++) {
             if ($this->game->locations[$i]['id'] === $location['id']) {
-                $this->game->locations[$i] = $location;
+//                $this->game->locations[$i] = $location;
                 $this->gameService->setField($this->game->code, 'locations', $location, $i);
                 $event = new ArriveAtLocationEvent($this->game, $location);
                 event($event);

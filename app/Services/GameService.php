@@ -6,6 +6,7 @@ use App\Game;
 use App\Jobs\LoadInitialGameDataJob;
 use App\Models\User;
 use Illuminate\Redis\RedisManager;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class GameService implements GameServiceContract
@@ -51,9 +52,9 @@ class GameService implements GameServiceContract
     public function setField($code, $field, $value, $key = null, $key2 = null): bool
     {
         $game = $this->loadGame($code);
-        if ($key && $key2) {
+        if ($key !== null && $key2 !== null) {
             $game->$field[$key][$key2] = $value;
-        } else if ($key) {
+        } else if ($key !== null) {
             $game->$field[$key] = $value;
         } else {
             $game->$field = $value;
