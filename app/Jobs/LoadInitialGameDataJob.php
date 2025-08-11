@@ -62,9 +62,7 @@ class LoadInitialGameDataJob implements ShouldQueue
 
         $data = $this->openAiService->getJsonResponse($prompt, $this->promptService->getShape('story.shape'));
 
-        $this->game->region = $data;
-
-        $this->gameService->saveGame($this->game);
+        $this->gameService->setField($this->game->code, 'region', $data);
 
         $broadcastEvent = new GameDataBroadCastEvent($this->game, $data['description']);
 
@@ -80,9 +78,7 @@ class LoadInitialGameDataJob implements ShouldQueue
             $this->promptService->getShape('characters.player.shape')
         );
 
-        $this->game->gameStartOptions['characters'] = $data['characters'];
-
-        $this->gameService->saveGame($this->game);
+        $this->gameService->setField($this->game->code, 'gameStartOptions', $data['characters'], 'characters');
 
         $broadcastEvent = new StartingCharactersEvent($this->game,  $data['characters']);
 
