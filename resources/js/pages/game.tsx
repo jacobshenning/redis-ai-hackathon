@@ -22,6 +22,7 @@ interface GamePageProps extends SharedData {
         id: number;
         name: string;
     };
+    startGameReady: boolean,
     startCharacters: [],
     startEquipment: [],
     content: string,
@@ -35,6 +36,7 @@ export default function Game() {
         gameCode,
         startCharacters,
         content,
+        startGameReady,
         character,
         equipment,
         startEquipment
@@ -54,6 +56,7 @@ export default function Game() {
     const [startingCharacters, setStartingCharacters] = useState(startCharacters);
     const [startingEquipment, setStartingEquipment] = useState(startEquipment);
     const [locationId, setLocationId] = useState(playerLocation);
+    const [gameReady, setGameReady] = useState(startGameReady);
 
     // Broadcasting channels
     const { channel: gameChannel } = useEchoPresence(`games.${gameCode}`);
@@ -149,7 +152,7 @@ export default function Game() {
         const channel = locationChannel();
 
         channel.listen('.ArriveAtLocationEvent', (event) => {
-            console.log(event);
+            setGameReady(true);
             setGameContent(gameContent + " \n" + event.description);
         });
     }, [locationChannel, locationId]);
@@ -239,7 +242,7 @@ export default function Game() {
                             <div></div>
                         }
 
-                        { !character ? (
+                        { !character && gameContent.length > 0 && gameContent.length == delayedContent.length ? (
                             <CharacterCards
                                 startingCharacters={startingCharacters}
                                 onCharacterClick={handleCharacterSelection}
@@ -248,8 +251,8 @@ export default function Game() {
 
                         { !equipment && character ? (
                             <EquipmentCards
-                                startingCharacters={startingEquipment}
-                                onCharacterClick={handleEquipmentSelection}
+                                startingEquipment={startingEquipment}
+                                onEquipmentClick={handleEquipmentSelection}
                             />
                         ) : (<div></div>)}
 
@@ -286,7 +289,7 @@ export default function Game() {
                     <div className="basis-1/5 p-2 flex items-center">
                         <button
                             onClick={handleSubmit}
-                            disabled={isSubmitting || !message.trim() || !locationId}
+                            disabled={isSubmitting || !message.trim() || !gameReady}
                             className="bg-red-900 border-red-600 hover:bg-red-500 border-2 text-white h-12 w-full cursor-pointer metamorphous-regular disabled:border-gray-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? 'Sending...' : 'Send'}

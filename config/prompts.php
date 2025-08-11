@@ -16,7 +16,7 @@ return [
         'tone' => 'Write for a fifth grade reading level.',
         'genre' => 'Write for the genre fantasy epic.',
         'era' => 'Write things based in European Middle Ages',
-        'rule_of_rpg' => 'Never act on behalf of the player. Do perceive a player intent, action, or thought - Because the player is of their own mind.'
+        'rule_of_rpg' => 'Never act on behalf of the player. Do perceive a player intent, action, or thought - Because the player is of their own mind.',
     ],
 
     'characters' => [
@@ -76,7 +76,7 @@ return [
             ],
         ],
         'logic' => [
-            'prompt' => '%name% wants to "%prompt%." They are in this location: %location%. They have these events available: %quest%. This is their character and equipment: %character%. They have luck (2-12) of %luck%. They have a penalty of (1-3) %penalty%. The analysis is where you explain what the player attempted and what happened. You may, briefly, recommend a course of action. If the penalty is greater than zero, 1,2, or 3, do the following respectively; Suggest player humiliation, suggest player loses loot, suggest player dies. If an event is triggered, return the id in your response. The result should be a single sentence brief observation about what happened, and whether it worked, or was silly, or even eluding to the fact that an event was triggered.',
+            'prompt' => '%name% wants to "%prompt%." They are in this location: %location%. They have these events available: %quest%. This is their character and equipment: %character%. They have luck (2-12) of %luck%. They have a penalty of (1-3) %penalty%. The analysis is where you explain what the player attempted and what happened. You may, briefly, recommend a course of action. If the penalty is greater than zero, 1,2, or 3, do the following respectively; Suggest player humiliation, suggest player loses loot, suggest player dies. If an event is triggered, return the id in your response. Do not return anything in the trigger response besides a quest id or it will break the game. The result should be a single sentence brief observation about what happened, and whether it worked, or was silly, or even eluding to the fact that an event was triggered.',
             'shape' => [
                 "result" => [
                     "type" => "string"

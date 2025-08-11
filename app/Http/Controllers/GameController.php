@@ -77,6 +77,14 @@ class GameController extends Controller
         }
         $content = "";
 
+        $gameReady = false;
+
+        foreach ($game->locations as $location) {
+            if (key_exists('description', $location) && ! empty($location['description'])) {
+                $gameReady = true;
+            }
+        }
+
         if ($game->closed) {
             $content = $eventStreamService->getLastEvents($request->user()->getKey());
             if (empty($content)) {
@@ -91,6 +99,7 @@ class GameController extends Controller
             'character' => $playerCharacter,
             'equipment' => $playerEquipment,
             'gameCode' => $game->code,
+            'startGameReady' => $gameReady,
             'content' => $content,
             'user' => $request->user(),
             'startCharacters' => $startingCharacters,
@@ -102,6 +111,8 @@ class GameController extends Controller
     {
         $name = $request->validate(['name' => 'string'])['name'];
 
+        $user = $request->user();
+
         $game = $gameServiceContract->loadGame($code);
 
         $characters =  $game->gameStartOptions['characters'];
@@ -109,12 +120,13 @@ class GameController extends Controller
         $character = [];
 
         for ($i = 0; $i < count($characters); $i++) {
-            if ($characters[$i]['name'] === $name) {
+            if ($characters[$i]['name'] == $name) {
                 $character = $characters[$i];
                 $character[$i] = $characters[0];
                 array_shift($characters);
                 $game->gameStartOptions['characters'] = $characters;
-                $game->players[$request->user()->getKey()]['character'] = $character;
+                $game->players[$user->getKey()]['character'] = $character;
+                $user->name = "$name ($user->name)";
                 $gameServiceContract->saveGame($game);
                 event(new StartingCharactersEvent($game, $characters));
                 return redirect()->route('game.play', $game->code);

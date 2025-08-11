@@ -40,6 +40,9 @@ class GenerateLocationJob implements ShouldQueue
         $this->openAiService = App::make(OpenAiServiceContract::class);
         $this->gameService = App::make(GameServiceContract::class);
         $this->eventStreamService = App::make(EventStreamServiceContract::class);
+
+        $this->game = $this->gameService->loadGame($this->game->code);
+
         /** @var PromptServiceContract promptService */
         $this->promptService = App::make(PromptServiceContract::class);
 

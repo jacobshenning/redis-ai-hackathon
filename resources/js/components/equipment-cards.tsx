@@ -1,8 +1,8 @@
 import React from 'react';
 import background from '../../assets/lisbon.svg'
 
-export default function EquipmentCards({ startingCharacters: startingEquipment = [], onCharacterClick: onEquipmentClick }) {
-    const handleCharacterClick = async (equipment) => {
+export default function EquipmentCards({ startingEquipment: startingEquipment = [], onEquipmentClick: onEquipmentClick }) {
+    const handleEquipmentClick = async (equipment) => {
         try {
             await onEquipmentClick(equipment);
         } catch (error) {
@@ -23,7 +23,7 @@ export default function EquipmentCards({ startingCharacters: startingEquipment =
                 {startingEquipment.map((equipment) => (
                     <div
                         key={equipment.name}
-                        onClick={() => handleCharacterClick(equipment)}
+                        onClick={() => handleEquipmentClick(equipment)}
                         style={{ backgroundImage: `url(${background})`}}
                         className="bg-red-900 bg-repeat bg-center border-red-600 border-2 text-white shadow-md hover:bg-red-500 transition-shadow duration-200 cursor-pointer p-4"
                     >
