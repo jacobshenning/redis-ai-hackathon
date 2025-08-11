@@ -280,7 +280,7 @@ class GameController extends Controller
 
         if ($trigger) {
 
-            $broadcastEvent = new GameDataBroadCastEvent($game, "Event triggered");
+            $broadcastEvent = new GameDataBroadCastEvent($game, "Event triggered $trigger");
 
             broadcast($broadcastEvent);
 
