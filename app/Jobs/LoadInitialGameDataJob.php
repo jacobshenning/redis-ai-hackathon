@@ -98,7 +98,7 @@ class LoadInitialGameDataJob implements ShouldQueue
 
         $this->game->gameStartOptions['equipment'] = $data['weapons'];
 
-        $this->gameService->saveGame($this->game);
+        $this->gameService->setField($this->game->code, 'gameStartOptions', $data['weapons'],'equipment');
 
         $broadcastEvent = new StartingEquipmentEvent($this->game, $data['weapons']);
 

@@ -48,6 +48,19 @@ class GameService implements GameServiceContract
         );
     }
 
+    public function setField($code, $field, $value, $key = null, $key2 = null): bool
+    {
+        $game = $this->loadGame($code);
+        if ($key && $key2) {
+            $game->$field[$key][$key2] = $value;
+        } else if ($key) {
+            $game->$field[$key] = $value;
+        } else {
+            $game->$field = $value;
+        }
+        return $this->saveGame($game);
+    }
+
     public function loadGame(string $code): ?Game
     {
         $data = $this->redis->get($this->getKey($code));

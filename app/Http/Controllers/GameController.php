@@ -127,7 +127,7 @@ class GameController extends Controller
                 $game->gameStartOptions['characters'] = $characters;
                 $game->players[$user->getKey()]['character'] = $character;
                 $user->name = "$name ($user->name)";
-                $gameServiceContract->saveGame($game);
+                $gameServiceContract->setField($game->code, 'players', $character, $user->getKey(), 'character');
                 event(new StartingCharactersEvent($game, $characters));
                 return redirect()->route('game.play', $game->code);
             }
@@ -151,7 +151,7 @@ class GameController extends Controller
                 array_shift($equipment);
                 $game->gameStartOptions['equipment'] = $equipment;
                 $game->players[$request->user()->getKey()]['equipment'] = $playerPick;
-                $gameServiceContract->saveGame($game);
+                $gameServiceContract->setField($game->code, 'players', $playerPick, $request->user()->getKey(), 'equipment');
                 event(new StartingEquipmentEvent($game, $equipment));
                 dispatch(new AttemptToStartGameJob($game));
                 return redirect()->route('game.play', $game->code);
@@ -175,6 +175,11 @@ class GameController extends Controller
         if (key_exists('deceased', $character) && $character['deceased']) {
             // @TODO add a player only message here?
             return;
+        }
+
+        if (! key_exists('location', $character)) {
+
+            return redirect()->route('game.play', $game->code);
         }
 
         $locationId = $game->players[$user->getKey()]['location'];
