@@ -254,13 +254,13 @@ class GameController extends Controller
 
             if ($playerRanAway) {
                 $game->players[$user->getKey()]['combat'] = null;
+                $gameService->saveGame($game);
             }
 
             if ($playerWon) {
                 $game->players[$user->getKey()]['combat'] = null;
+                $gameService->saveGame($game);
             }
-
-            $gameService->saveGame($game);
 
             $broadcastEvent = new GameDataBroadCastEvent($game, $result);
 
@@ -482,7 +482,7 @@ class GameController extends Controller
 
         $game->players[$user->getKey()] = [];
 
-        $gameService->saveGame($game);
+        $gameService->setField($game->code, 'players', [], $user->getKey());
 
         return redirect()->route('game.play', $game->code);
     }

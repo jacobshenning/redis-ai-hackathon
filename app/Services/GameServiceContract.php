@@ -13,7 +13,7 @@ interface GameServiceContract
 
     public function saveGame(Game $game): bool;
 
-    public function setField($code, $field, $value, $key = null): bool;
+    public function setField($code, $field, $value, $key = null, $key2 = null): bool;
 
     public function loadGame(string $code): ?Game;
 

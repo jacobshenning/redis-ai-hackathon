@@ -43,12 +43,10 @@ class AttemptToStartGameJob implements ShouldQueue
 
         event($event);
 
-        $this->game->closed = true;
-
         /** @var GameService $gameService */
         $gameService = App::make(GameServiceContract::class);
 
-        $gameService->saveGame($this->game);
+        $gameService->setField($this->game->code, 'closed', true);
 
         /** @var EventStreamServiceContract $eventStream */
         $eventStream = App::make(EventStreamServiceContract::class);
