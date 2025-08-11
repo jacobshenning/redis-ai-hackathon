@@ -55,7 +55,8 @@ class AttemptToStartGameJob implements ShouldQueue
 
         foreach ($players as $id => $player) {
             $eventStream->addEvent($id, $this->game->region['description'] . "\n Game has started. No new players can join \n");
-            $this->game->players[$id]['location'] = $startingLocation['id'];
+            $gameService->setField($this->game->code, 'players', $startingLocation['id'], $id, 'location');
+
             $event = new ChangedLocationEvent($startingLocation['id'], $id, null);
             event($event);
         }
