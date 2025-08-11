@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\EventStreamServiceContract;
 use App\Services\GameServiceContract;
 use App\Services\OpenAiServiceContract;
+use App\Services\PromptServiceContract;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -107,8 +108,6 @@ class GameController extends Controller
 
         $character = [];
 
-        try {
-
         for ($i = 0; $i < count($characters); $i++) {
             if ($characters[$i]['name'] === $name) {
                 $character = $characters[$i];
@@ -120,9 +119,6 @@ class GameController extends Controller
                 event(new StartingCharactersEvent($game, $characters));
                 return redirect()->route('game.play', $game->code);
             }
-        }
-        } catch (\Exception $e) {
-            dd($game->gameStartOptions['characters'], $e, $characters);
         }
 
         abort(404);
@@ -154,13 +150,20 @@ class GameController extends Controller
     }
 
 
-    public function narrate(string $gameCode, Request $request, OpenAiServiceContract $openAiService, GameServiceContract $gameService)
+    public function narrate(string $gameCode, Request $request, OpenAiServiceContract $openAiService, GameServiceContract $gameService, PromptServiceContract $promptService)
     {
         $promptAttempt = $request->validate(['action' => 'string'])['action'];
 
         $game = $gameService->loadGame($gameCode);
 
         $user = $request->user();
+
+        $character = $game->players[$user->getKey()];
+
+        if (key_exists('deceased', $character) && $character['deceased']) {
+            // @TODO add a player only message here?
+            return;
+        }
 
         $locationId = $game->players[$user->getKey()]['location'];
         $locationIndex = null;
@@ -173,13 +176,13 @@ class GameController extends Controller
             }
         }
 
-        $user = Auth::user();
-        $name = $user->name;
-
         [
             'prompt' => $prompt,
             'penalty' => $penalty
-        ] = json_decode($openAiService->getJsonResponseOld(config('services.openai.player.filter') . "Here is the prompt by $name: '$promptAttempt'", config('services.openai.player.filter_text'))[0], true);
+        ] = $openAiService->getJsonResponse(
+            $promptService->getPrompt('action.filter.prompt', [], ['user' => $user->name, 'attempt' => $promptAttempt], ['rule_of_rpg']),
+            $promptService->getShape('action.filter.shape')
+        );
 
         $broadcastEvent = new GameDataBroadCastEvent($game, $prompt);
 
@@ -227,9 +230,9 @@ class GameController extends Controller
                 $game->players[$user->getKey()]['combat']['attackers'] = $attackers;
             }
 
-
             if ($playerDied) {
-                // @TODO end game for this player. They can only spectate.
+                $game->players[$user->getKey()]['deceased'] = true;
+                $gameService->saveGame($game);
             }
 
             if ($playerRanAway) {
@@ -253,30 +256,29 @@ class GameController extends Controller
 
         $quests = $location['quests'];
 
-
-        $triggers = [];
-
-
-        foreach ($quests as $quest) {
-            $triggers[] = $quest['trigger'];
-        }
-
-        $broadcastEvent = new GameDataBroadCastEvent($game, json_encode($triggers));
-
-        broadcast($broadcastEvent);
-
         [
             'result' => $result,
-            'lootGained' => $lootGained,
-            'lootLost' => $lootLost,
-            'event' => $event,
-        ] = json_decode($openAiService->getJsonResponseOld(config('services.openai.player.result') . " Player prompt: $prompt. Player luck: $luck. Player penalty: $penalty. Location details: {$location['description']}. Player is regular human. Player inventory is empty. Quest data " . json_encode($quests) , config('services.openai.player.result_text'))[0], true);
+            'trigger' => $trigger,
+            'analysis' => $analysis
+        ] = $openAiService->getJsonResponse(
+            $promptService->getPrompt('action.logic.prompt', [], ['prompt' => $prompt, 'quests' => json_encode($quests), 'location' => json_encode($location), 'character' => json_encode($character), 'luck' => $luck, 'penalty' => $penalty, 'name' => $user->name], ['rule_of_rpg']),
+            $promptService->getShape('action.logic.shape')
+        );
 
         $broadcastEvent = new GameDataBroadCastEvent($game, $result);
 
         broadcast($broadcastEvent);
 
-        if ($event) {
+//        [
+//            'result' => $result,
+//            'event' => $event,
+//        ] = json_decode($openAiService->getJsonResponseOld(config('services.openai.player.result') . " Player prompt: $prompt. Player luck: $luck. Player penalty: $penalty. Location details: {$location['description']}. Player is regular human. Player inventory is empty. Quest data " . json_encode($quests) , config('services.openai.player.result_text'))[0], true);
+//
+//        $broadcastEvent = new GameDataBroadCastEvent($game, $result);
+//
+//        broadcast($broadcastEvent);
+
+        if ($trigger) {
 
             $broadcastEvent = new GameDataBroadCastEvent($game, "Event triggered");
 
@@ -286,7 +288,7 @@ class GameController extends Controller
             $quest = null;
 
             foreach ($quests as $key => $value) {
-                if ($value['id'] == $event) {
+                if ($value['id'] == $trigger) {
                     $questIndex = $key;
                     $quest = $value;
                 }
@@ -357,20 +359,31 @@ class GameController extends Controller
             $broadcastEvent = new GameDataBroadCastEvent($game, $event);
 
             broadcast($broadcastEvent);
-        } else {
-            $broadcastEvent = new GameDataBroadCastEvent($game, "No event triggered");
 
-            broadcast($broadcastEvent);
+            return;
         }
 
+        [
+            'result' => $finalResult,
+            'lootLost' => $lootLost,
+            'killPlayer' => $playerDeath
+        ] = $openAiService->getJsonResponse(
+            $promptService->getPrompt('action.result.prompt', [], ['result' => $result, 'analysis' => $analysis, 'character' => json_encode($character), 'name' => $user->name]),
+            $promptService->getShape('action.result.shape')
+        );
 
-//        $game->land = "$content $event";
+        $broadcastEvent = new GameDataBroadCastEvent($game, $finalResult);
 
-//        $eventStreamService->addEvent($user->getKey(), 'story', [$content]);
+        broadcast($broadcastEvent);
 
-//        $game->save();
+        if ($lootLost) {
 
-//        event(StoryUpdated::broadcast($game));
+        }
+
+        if ($playerDeath) {
+            $game->players[$user->getKey()]['deceased'] = true;
+            $gameService->saveGame($game);
+        }
     }
 
     /**

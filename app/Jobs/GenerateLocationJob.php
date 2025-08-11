@@ -7,6 +7,7 @@ use App\Game;
 use App\Services\EventStreamServiceContract;
 use App\Services\GameServiceContract;
 use App\Services\OpenAiServiceContract;
+use App\Services\PromptServiceContract;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\App;
@@ -17,9 +18,11 @@ class GenerateLocationJob implements ShouldQueue
 {
     use Queueable;
 
-    private $openAiService;
+    private OpenAiServiceContract $openAiService;
     private GameServiceContract $gameService;
     private EventStreamServiceContract $eventStreamService;
+
+    private PromptServiceContract $promptService;
 
     /**
      * Create a new job instance.
@@ -37,14 +40,13 @@ class GenerateLocationJob implements ShouldQueue
         $this->openAiService = App::make(OpenAiServiceContract::class);
         $this->gameService = App::make(GameServiceContract::class);
         $this->eventStreamService = App::make(EventStreamServiceContract::class);
+        /** @var PromptServiceContract promptService */
+        $this->promptService = App::make(PromptServiceContract::class);
 
         $biome = collect($this->game->region['biomes'])->random();
-        $locationType = collect(config('services.openai.location.types'))->random();
+        $prompt = $this->promptService->getPrompt('locations.pre-prompt', ['locations.type'], ['biome' => $biome]);
 
-        $seed = $this->openAiService->getResponse(
-            config('services.openai.location.seed') . " {$this->game->region['description']}. Make them in this biome: $biome. The location type is: $locationType",
-            config('services.openai.location.text')
-        );
+        $seed = $this->openAiService->getResponse($prompt);
 
         // 1 Push quest, invisible
         $travelQuests = $this->generateTravelQuests($seed, $this->location['next']);

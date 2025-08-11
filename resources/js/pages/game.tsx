@@ -287,7 +287,7 @@ export default function Game() {
                         <button
                             onClick={handleSubmit}
                             disabled={isSubmitting || !message.trim() || !locationId}
-                            className="bg-red-900 border-red-600 hover:bg-red-500 border-2 text-white h-12 w-full cursor-pointer disabled:border-gray-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                            className="bg-red-900 border-red-600 hover:bg-red-500 border-2 text-white h-12 w-full cursor-pointer metamorphous-regular disabled:border-gray-500 disabled:bg-gray-400 disabled:cursor-not-allowed"
                         >
                             {isSubmitting ? 'Sending...' : 'Send'}
                         </button>
